@@ -7,45 +7,60 @@ import '../../../core/helper/app_text_style.dart';
 import '../data/models/space_model.dart';
 
 class CreateSpaceScreen extends StatefulWidget {
-  const CreateSpaceScreen({super.key});
+  final String? initialName;
+  final String? initialIcon;
+
+  const CreateSpaceScreen({
+    super.key,
+    this.initialName,
+    this.initialIcon,
+  });
 
   @override
   State<CreateSpaceScreen> createState() => _CreateSpaceScreenState();
 }
 
 class _CreateSpaceScreenState extends State<CreateSpaceScreen> {
-  final TextEditingController _nameController = TextEditingController();
+  late TextEditingController _nameController;
 
   final List<Map<String, String>> _templates = [
-    {
-      'name': 'Home',
-      'icon': 'assets/onboarding/rafiki.svg',
-      'color': '#E8F5E9'
-    },
-    {'name': 'Car', 'icon': 'assets/onboarding/pana.svg', 'color': '#FFF3E0'},
+    {'name': 'Home', 'icon': 'assets/onboarding/House.svg', 'color': '#E8F5E9'},
+    {'name': 'Car', 'icon': 'assets/onboarding/Car.svg', 'color': '#FFF3E0'},
     {
       'name': 'Travel',
-      'icon': 'assets/onboarding/trans3.svg',
+      'icon': 'assets/onboarding/plane.svg',
       'color': '#E3F2FD'
     },
     {
       'name': 'Education',
-      'icon': 'assets/onboarding/bro.svg',
+      'icon': 'assets/onboarding/books.svg',
       'color': '#F3E5F5'
     },
+    {'name': 'Gifts', 'icon': 'assets/onboarding/gift.svg', 'color': '#FCE4EC'},
     {
-      'name': 'Gifts',
-      'icon': 'assets/onboarding/amico.svg',
-      'color': '#FCE4EC'
-    },
-    {
-      'name': 'Marriage',
-      'icon': 'assets/onboarding/rafiki.svg',
+      'name':
+          'Marriage', // Duplicate name in list, might want to check this later
+      'icon': 'assets/onboarding/wedding-rings.svg',
       'color': '#EFEBE9'
     },
   ];
 
   int _selectedTemplateIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.initialName ?? '');
+
+    // Find matching template if initialIcon is provided
+    if (widget.initialIcon != null) {
+      final index =
+          _templates.indexWhere((t) => t['icon'] == widget.initialIcon);
+      if (index != -1) {
+        _selectedTemplateIndex = index;
+      }
+    }
+  }
 
   @override
   void dispose() {

@@ -7,6 +7,10 @@ import 'package:flutter_application_1/feature/auth/screens/login_screen.dart';
 import 'package:flutter_application_1/feature/auth/screens/sign_up_screen.dart';
 
 import 'package:flutter_application_1/feature/home/screens/main_screen.dart';
+import '../../feature/more/screens/about_grow_screen.dart';
+import '../../feature/more/screens/request_call_screen.dart';
+import '../../feature/more/screens/know_your_rights_screen.dart';
+import '../../feature/more/screens/faqs_screen.dart';
 import '../../feature/Onboarding/splash_screen.dart';
 
 class AppRouter {
@@ -28,6 +32,14 @@ class AppRouter {
         return RouterTransitions.build(const LoginScreen());
       case Routes.homeView:
         return RouterTransitions.build(const MainScreen());
+      case Routes.aboutGrowScreen:
+        return RouterTransitions.build(const AboutGrowScreen());
+      case Routes.requestCallScreen:
+        return RouterTransitions.build(const RequestCallScreen());
+      case Routes.knowYourRightsScreen:
+        return RouterTransitions.build(const KnowYourRightsScreen());
+      case Routes.faqsScreen:
+        return RouterTransitions.build(const FaqsScreen());
       default:
         return RouterTransitions.build(
           Scaffold(body: Center(child: Text("No Route: ${settings.name}"))),

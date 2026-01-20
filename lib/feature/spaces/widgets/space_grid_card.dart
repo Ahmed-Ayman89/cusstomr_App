@@ -16,53 +16,45 @@ class SpaceGridCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = Color(int.parse(space.color.replaceAll('#', '0xFF')));
-    final isMainAccount = space.id == '1'; // Assuming '1' is Main Account
-
+    // Using white background for the card to let the icon stand out
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16.r),
       child: Container(
         decoration: BoxDecoration(
-          color: isMainAccount ? null : color.withOpacity(0.1),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16.r),
-          border: isMainAccount
-              ? null
-              : Border.all(
-                  color: color.withOpacity(0.3),
-                  width: 1,
-                ),
-          image: isMainAccount
-              ? const DecorationImage(
-                  image: AssetImage('assets/onboarding/card_bg.png'),
-                  fit: BoxFit.cover,
-                )
-              : null,
+          border: Border.all(
+            color: Colors.grey.shade200,
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            )
+          ],
         ),
         padding: EdgeInsets.all(16.r),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Icon
-            Container(
-              width: 32.w,
-              height: 32.h,
-              decoration: BoxDecoration(
-                color: isMainAccount ? Colors.white.withOpacity(0.2) : color,
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              child: Center(
-                child: _buildIcon(isMainAccount, color),
+            // Icon (Larger and original colors)
+            Center(
+              child: SizedBox(
+                width: 60.w,
+                height: 60.h,
+                child: _buildIcon(),
               ),
             ),
             const Spacer(),
             // Space Name
             Text(
               space.name,
-              style: AppTextStyle.setPoppinsTextStyle(
+              style: AppTextStyle.setPoppinsBlack(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: isMainAccount ? Colors.white : Colors.black,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -71,40 +63,45 @@ class SpaceGridCard extends StatelessWidget {
             // Points
             Text(
               'Points ${space.currentAmount.toStringAsFixed(0)}',
-              style: AppTextStyle.setPoppinsTextStyle(
+              style: AppTextStyle.setPoppinsSecondaryText(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: isMainAccount
-                    ? Colors.white.withOpacity(0.7)
-                    : Colors.grey.shade500,
               ),
             ),
+            if (space.hasGoal && space.goalAmount != null) ...[
+              SizedBox(height: 8.h),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4.r),
+                child: LinearProgressIndicator(
+                  value: space.progress,
+                  backgroundColor: Colors.grey.shade100,
+                  valueColor:
+                      const AlwaysStoppedAnimation<Color>(Color(0xFF008751)),
+                  minHeight: 4.h,
+                ),
+              ),
+            ]
           ],
         ),
       ),
     );
   }
 
-  Widget _buildIcon(bool isMainAccount, Color color) {
+  Widget _buildIcon() {
     if (space.iconAsset.endsWith('.svg')) {
       return SvgPicture.asset(
         space.iconAsset,
-        width: 20.w,
-        height: 20.h,
-        colorFilter: ColorFilter.mode(
-          isMainAccount ? Colors.white : Colors.white,
-          BlendMode.srcIn,
-        ),
+        fit: BoxFit.contain,
+        // No ColorFilter to preserve original colors
       );
     } else {
       return Image.asset(
         space.iconAsset,
-        width: 20.w,
-        height: 20.h,
+        fit: BoxFit.contain,
         errorBuilder: (context, error, stackTrace) => Icon(
           Icons.savings_outlined,
-          color: Colors.white,
-          size: 18.r,
+          color: const Color(0xFF008751),
+          size: 40.r,
         ),
       );
     }

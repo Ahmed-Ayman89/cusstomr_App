@@ -33,4 +33,8 @@ class Routes {
   static const String workerDetailsView = '/WorkerDetailsView';
   static const String addKioskView = '/AddKioskView';
   static const String accessDeniedView = '/AccessDeniedView';
+  static const String aboutGrowScreen = '/AboutGrowScreen';
+  static const String requestCallScreen = '/RequestCallScreen';
+  static const String knowYourRightsScreen = '/KnowYourRightsScreen';
+  static const String faqsScreen = '/FaqsScreen';
 }

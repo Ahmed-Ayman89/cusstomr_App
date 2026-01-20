@@ -134,8 +134,8 @@ class _SpacesScreenContent extends StatelessWidget {
                             },
                           );
                         }
-
-                        final space = state.spaces[index];
+                        // For existing spaces
+                        final space = (state).spaces[index];
                         return SpaceGridCard(
                           space: space,
                           onTap: () {
@@ -157,7 +157,8 @@ class _SpacesScreenContent extends StatelessWidget {
                           },
                         );
                       },
-                      childCount: state.spaces.length + 1, // +1 for "New Space"
+                      childCount:
+                          (state.spaces.length) + 1, // +1 for "New Space"
                     ),
                   ),
                 ),
@@ -188,25 +189,49 @@ class _NewSpaceCard extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(16.r),
       child: Container(
+        padding: EdgeInsets.all(16.r),
         decoration: BoxDecoration(
-          color: const Color(0xFFF5F5F5),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            )
+          ],
         ),
-        child: Center(
-          child: Container(
-            width: 40.w,
-            height: 40.h,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20.r),
-              border: Border.all(color: Colors.grey.shade200),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color:
+                      const Color(0xFFC8E6C9), // Light teal/green from design
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.add,
+                    color: const Color(0xFF1B5E20), // Dark green
+                    size: 32.r,
+                  ),
+                ),
+              ),
             ),
-            child: Icon(
-              Icons.add,
-              color: const Color(0xFF008751),
-              size: 24.r,
+            SizedBox(height: 12.h),
+            Text(
+              'New Space',
+              style: AppTextStyle.setPoppinsTextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: const Color(0xFF00695C), // Dark teal/green
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

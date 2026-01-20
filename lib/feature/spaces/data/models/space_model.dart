@@ -6,6 +6,7 @@ class SpaceModel {
   final double? goalAmount;
   final String color;
   final bool hasGoal;
+  final DateTime? deadline;
 
   SpaceModel({
     required this.id,
@@ -15,6 +16,7 @@ class SpaceModel {
     this.goalAmount,
     required this.color,
     required this.hasGoal,
+    this.deadline,
   });
 
   double get progress {
@@ -36,6 +38,8 @@ class SpaceModel {
           : null,
       color: json['color'] ?? '#008751',
       hasGoal: json['hasGoal'] ?? false,
+      deadline:
+          json['deadline'] != null ? DateTime.tryParse(json['deadline']) : null,
     );
   }
 
@@ -48,6 +52,7 @@ class SpaceModel {
       'goalAmount': goalAmount,
       'color': color,
       'hasGoal': hasGoal,
+      'deadline': deadline?.toIso8601String(),
     };
   }
 
@@ -59,6 +64,7 @@ class SpaceModel {
     double? goalAmount,
     String? color,
     bool? hasGoal,
+    DateTime? deadline,
   }) {
     return SpaceModel(
       id: id ?? this.id,
@@ -68,6 +74,7 @@ class SpaceModel {
       goalAmount: goalAmount ?? this.goalAmount,
       color: color ?? this.color,
       hasGoal: hasGoal ?? this.hasGoal,
+      deadline: deadline ?? this.deadline,
     );
   }
 }
