@@ -1,0 +1,36 @@
+class Routes {
+  Routes._();
+  static const String splashScreen = '/SplashScreen';
+  static const String onBoardView = '/OnBoardView';
+  static const String logInView = '/LogInView';
+  static const String optionScreen = '/OptionScreen';
+  static const String registerScreen = '/RegisterScreen';
+  static const String forgetPasswordScreen = '/ForgetPasswordScreen';
+  static const String otpScreen = '/OtpScreen';
+  static const String verificationScreen = '/VerificationScreen';
+  static const String resetPasswordScreen = '/ResetPasswordScreen';
+  static const String homeView = '/HomeView';
+  static const String editProfileView = '/EditProfileView';
+  static const String settingsView = '/SettingsView';
+  static const String withdrawalView = '/WithdrawalView';
+  static const String withdrawalDetailsView = '/WithdrawalDetailsView';
+  static const String instapayWithdrawalView = '/InstapayWithdrawalView';
+  static const String transferView = '/TransferView';
+  static const String transferDetailsView = '/TransferDetailsView';
+  static const String transferSuccessView = '/TransferSuccessView';
+  static const String kioskSelectionView = '/KioskSelectionView';
+  static const String addWorkerFormView = '/AddWorkerFormView';
+  static const String addWorkerSuccessView = '/AddWorkerSuccessView';
+  static const String manageKioskView = '/ManageKioskView';
+  static const String kioskTransactionsView = '/KioskTransactionsView';
+  static const String workerGoalsView = '/WorkerGoalsView';
+  static const String workerInvitationsView = '/WorkerInvitationsView';
+  static const String workerProfileView = '/WorkerProfileView';
+  static const String workerMainLayout = '/WorkerMainLayout';
+  static const String workerStaticView = '/WorkerStaticView';
+  static const String kioskDetailedGoalsView = '/KioskDetailedGoalsView';
+  static const String notificationsView = '/NotificationsView';
+  static const String workerDetailsView = '/WorkerDetailsView';
+  static const String addKioskView = '/AddKioskView';
+  static const String accessDeniedView = '/AccessDeniedView';
+}
