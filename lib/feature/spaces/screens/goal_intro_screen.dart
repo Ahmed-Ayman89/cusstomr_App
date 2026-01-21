@@ -6,14 +6,7 @@ import '../../auth/widgets/Cusstom_btn.dart';
 import 'create_space_screen.dart';
 
 class GoalIntroScreen extends StatelessWidget {
-  final String goalName;
-  final String iconAsset;
-
-  const GoalIntroScreen({
-    super.key,
-    required this.goalName,
-    required this.iconAsset,
-  });
+  const GoalIntroScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -89,10 +82,7 @@ class GoalIntroScreen extends StatelessWidget {
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => CreateSpaceScreen(
-                        initialName: goalName,
-                        initialIcon: iconAsset,
-                      ),
+                      builder: (context) => const CreateSpaceScreen(),
                     ),
                   );
                 },

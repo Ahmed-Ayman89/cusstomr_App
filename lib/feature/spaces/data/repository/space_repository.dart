@@ -7,6 +7,7 @@ abstract class SpaceRepository {
   Future<void> updateSpace(SpaceModel space);
   Future<void> deleteSpace(String id);
   Future<void> setGoal(String spaceId, double goalAmount);
+  Future<void> transferPoints(String? fromId, String? toId, double amount);
 }
 
 class SpaceRepositoryImpl implements SpaceRepository {
@@ -75,6 +76,38 @@ class SpaceRepositoryImpl implements SpaceRepository {
         goalAmount: goalAmount,
         hasGoal: true,
       );
+    }
+  }
+
+  @override
+  Future<void> transferPoints(
+      String? fromId, String? toId, double amount) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    // Withdraw from source
+    if (fromId != null) {
+      final fromIndex = _mockSpaces.indexWhere((s) => s.id == fromId);
+      if (fromIndex != -1) {
+        final current = _mockSpaces[fromIndex].currentAmount;
+        if (current >= amount) {
+          _mockSpaces[fromIndex] = _mockSpaces[fromIndex].copyWith(
+            currentAmount: current - amount,
+          );
+        } else {
+          throw Exception('Insufficient funds in source space');
+        }
+      }
+    }
+
+    // Deposit to destination
+    if (toId != null) {
+      final toIndex = _mockSpaces.indexWhere((s) => s.id == toId);
+      if (toIndex != -1) {
+        final current = _mockSpaces[toIndex].currentAmount;
+        _mockSpaces[toIndex] = _mockSpaces[toIndex].copyWith(
+          currentAmount: current + amount,
+        );
+      }
     }
   }
 }

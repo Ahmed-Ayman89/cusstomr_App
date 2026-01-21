@@ -1,10 +1,15 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../auth/widgets/Cusstom_btn.dart';
 import '../../auth/widgets/custom_text_field.dart';
 import '../../../core/helper/app_text_style.dart';
 import '../data/models/space_model.dart';
+
+import '../widgets/creation_flow/initial_deposit_modal.dart';
+import 'set_goal_screen.dart'; // Still same filename, but class name changed
 
 class CreateSpaceScreen extends StatefulWidget {
   final String? initialName;
@@ -22,6 +27,8 @@ class CreateSpaceScreen extends StatefulWidget {
 
 class _CreateSpaceScreenState extends State<CreateSpaceScreen> {
   late TextEditingController _nameController;
+  File? _pickedImage;
+  final ImagePicker _picker = ImagePicker();
 
   final List<Map<String, String>> _templates = [
     {'name': 'Home', 'icon': 'assets/onboarding/House.svg', 'color': '#E8F5E9'},
@@ -54,11 +61,25 @@ class _CreateSpaceScreenState extends State<CreateSpaceScreen> {
 
     // Find matching template if initialIcon is provided
     if (widget.initialIcon != null) {
-      final index =
-          _templates.indexWhere((t) => t['icon'] == widget.initialIcon);
-      if (index != -1) {
-        _selectedTemplateIndex = index;
+      if (widget.initialIcon!.startsWith('assets/')) {
+        final index =
+            _templates.indexWhere((t) => t['icon'] == widget.initialIcon);
+        if (index != -1) {
+          _selectedTemplateIndex = index;
+        }
+      } else {
+        // It's a file path
+        _pickedImage = File(widget.initialIcon!);
       }
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        _pickedImage = File(image.path);
+      });
     }
   }
 
@@ -113,27 +134,39 @@ class _CreateSpaceScreenState extends State<CreateSpaceScreen> {
                             borderRadius: BorderRadius.circular(16.r),
                           ),
                           child: Center(
-                            child: SvgPicture.asset(
-                              selectedTemplate['icon']!,
-                              height: 140.h,
-                              fit: BoxFit.contain,
-                            ),
+                            child: _pickedImage != null
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(12.r),
+                                    child: Image.file(
+                                      _pickedImage!,
+                                      height: 140.h,
+                                      fit: BoxFit.contain,
+                                    ),
+                                  )
+                                : SvgPicture.asset(
+                                    selectedTemplate['icon']!,
+                                    height: 140.h,
+                                    fit: BoxFit.contain,
+                                  ),
                           ),
                         ),
                         Positioned(
                           bottom: 12.r,
                           right: 12.r,
-                          child: Container(
-                            width: 32.r,
-                            height: 32.r,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF008751),
-                              borderRadius: BorderRadius.circular(16.r),
-                            ),
-                            child: Icon(
-                              Icons.image_outlined,
-                              color: Colors.white,
-                              size: 16.r,
+                          child: InkWell(
+                            onTap: _pickImage,
+                            child: Container(
+                              width: 32.r,
+                              height: 32.r,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF008751),
+                                borderRadius: BorderRadius.circular(16.r),
+                              ),
+                              child: Icon(
+                                Icons.image_outlined,
+                                color: Colors.white,
+                                size: 16.r,
+                              ),
                             ),
                           ),
                         ),
@@ -171,6 +204,11 @@ class _CreateSpaceScreenState extends State<CreateSpaceScreen> {
                               onTap: () {
                                 setState(() {
                                   _selectedTemplateIndex = index;
+                                  // If user selects a template, reset picked image?
+                                  // Maybe keep picked image but update background color?
+                                  // For now, let's clear picked image to switch back to template mode
+                                  _pickedImage = null;
+
                                   if (_nameController.text.isEmpty ||
                                       _templates.any((t) =>
                                           t['name'] == _nameController.text)) {
@@ -222,7 +260,7 @@ class _CreateSpaceScreenState extends State<CreateSpaceScreen> {
               padding: EdgeInsets.all(24.r),
               child: CustomButton(
                 title: 'Continue',
-                onPressed: () {
+                onPressed: () async {
                   if (_nameController.text.trim().isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -236,14 +274,40 @@ class _CreateSpaceScreenState extends State<CreateSpaceScreen> {
                   final newSpace = SpaceModel(
                     id: DateTime.now().millisecondsSinceEpoch.toString(),
                     name: _nameController.text.trim(),
-                    iconAsset: selectedTemplate['icon']!,
+                    iconAsset: _pickedImage?.path ?? selectedTemplate['icon']!,
                     currentAmount: 0.0,
                     goalAmount: null,
                     color: '#008751',
                     hasGoal: false,
                   );
 
-                  Navigator.pop(context, newSpace);
+                  final result = await showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) =>
+                        SetGoalBottomSheet(tempSpace: newSpace),
+                  );
+
+                  if (result != null && context.mounted) {
+                    await showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (context) => InitialDepositModal(
+                        spaceName: result.name,
+                        spaceIcon: result.iconAsset,
+                        onConfirm: (amount) {
+                          Navigator.pop(context); // Close InitialDepositModal
+                          Navigator.pop(context, result); // Return to dashboard
+                        },
+                        onSkip: () {
+                          Navigator.pop(context); // Close InitialDepositModal
+                          Navigator.pop(context, result); // Return to dashboard
+                        },
+                      ),
+                    );
+                  }
                 },
                 color: const Color(0xFF008751),
                 textColor: Colors.white,

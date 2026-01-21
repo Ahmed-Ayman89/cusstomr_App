@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+
 import '../../../core/helper/app_text_style.dart';
+import '../data/models/space_model.dart';
 import '../data/repository/space_repository.dart';
 import '../manager/space_cubit.dart';
 import '../manager/space_state.dart';
 import 'space_settings_screen.dart';
+import '../widgets/space_icon.dart';
+import '../widgets/transfer/transfer_points_modal.dart';
+import '../manager/transfer_cubit.dart';
 
 class SpaceDetailScreen extends StatelessWidget {
   final String spaceId;
@@ -15,10 +19,13 @@ class SpaceDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) =>
-          SpaceCubit(SpaceRepositoryImpl())..loadSpaceDetail(spaceId),
-      child: _SpaceDetailContent(spaceId: spaceId),
+    return RepositoryProvider(
+      create: (context) => SpaceRepositoryImpl(),
+      child: BlocProvider(
+        create: (context) => SpaceCubit(context.read<SpaceRepositoryImpl>())
+          ..loadSpaceDetail(spaceId),
+        child: _SpaceDetailContent(spaceId: spaceId),
+      ),
     );
   }
 }
@@ -106,8 +113,8 @@ class _SpaceDetailContent extends StatelessWidget {
                         height: 100.h,
                         // The design shows a large illustration.
                         // Using the SVG asset directly without a container bg if possible, or keeping it clean.
-                        child: SvgPicture.asset(
-                          space.iconAsset,
+                        child: SpaceIcon(
+                          iconPath: space.iconAsset,
                           fit: BoxFit.contain,
                         ),
                       ),
@@ -167,7 +174,8 @@ class _SpaceDetailContent extends StatelessWidget {
                               Expanded(
                                 child: ElevatedButton(
                                   onPressed: () {
-                                    // TODO: Implement Add Point
+                                    _showTransferModal(context,
+                                        isDeposit: true, currentSpace: space);
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: themeColor,
@@ -201,7 +209,8 @@ class _SpaceDetailContent extends StatelessWidget {
                               Expanded(
                                 child: OutlinedButton(
                                   onPressed: () {
-                                    // TODO: Implement Move Point
+                                    _showTransferModal(context,
+                                        isDeposit: false, currentSpace: space);
                                   },
                                   style: OutlinedButton.styleFrom(
                                     side:
@@ -445,5 +454,42 @@ class _SpaceDetailContent extends StatelessWidget {
     final now = DateTime.now();
     final difference = deadline.difference(now);
     return difference.inDays > 0 ? difference.inDays : 0;
+  }
+
+  void _showTransferModal(BuildContext context,
+      {required bool isDeposit, required SpaceModel currentSpace}) {
+    final repo = context.read<SpaceRepositoryImpl>();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => BlocProvider(
+        create: (context) => TransferCubit(repo),
+        child: FutureBuilder(
+          future: repo.getSpaces(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final spaces = snapshot.data ?? [];
+            // Remove current space from available options if moving FROM it (actually logic handled in cubit, but good to filter)
+            // But for now pass all
+
+            return TransferPointsModal(
+              availableSpaces: spaces,
+              initialSource:
+                  isDeposit ? null : currentSpace, // null = Main Account
+              initialDestination:
+                  isDeposit ? currentSpace : null, // null = User Chooses
+            );
+          },
+        ),
+      ),
+    ).then((_) {
+      // Refresh
+      if (context.mounted) {
+        context.read<SpaceCubit>().loadSpaceDetail(spaceId);
+      }
+    });
   }
 }

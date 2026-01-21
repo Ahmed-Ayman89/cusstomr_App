@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+
 import '../../../../core/helper/app_text_style.dart';
 import '../data/models/space_model.dart';
+import 'space_icon.dart';
 
 class SpaceGridCard extends StatelessWidget {
   final SpaceModel space;
@@ -88,22 +89,9 @@ class SpaceGridCard extends StatelessWidget {
   }
 
   Widget _buildIcon() {
-    if (space.iconAsset.endsWith('.svg')) {
-      return SvgPicture.asset(
-        space.iconAsset,
-        fit: BoxFit.contain,
-        // No ColorFilter to preserve original colors
-      );
-    } else {
-      return Image.asset(
-        space.iconAsset,
-        fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) => Icon(
-          Icons.savings_outlined,
-          color: const Color(0xFF008751),
-          size: 40.r,
-        ),
-      );
-    }
+    return SpaceIcon(
+      iconPath: space.iconAsset,
+      fit: BoxFit.contain,
+    );
   }
 }

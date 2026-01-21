@@ -148,7 +148,7 @@ class _SpaceSettingsScreenState extends State<SpaceSettingsScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Seeting', // As per design
+          'Settings', // As per design
           style: AppTextStyle.setPoppinsBlack(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -220,8 +220,12 @@ class _SpaceSettingsScreenState extends State<SpaceSettingsScreen> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.delete_outline,
-                                color: Colors.red, size: 24.r),
+                            SvgPicture.asset(
+                              'assets/icons/delete.svg',
+                              width: 24.r,
+                              height: 24.r,
+                              fit: BoxFit.scaleDown,
+                            ),
                             SizedBox(width: 12.w),
                             Text(
                               'Delete Space',
@@ -270,14 +274,14 @@ class _SpaceSettingsScreenState extends State<SpaceSettingsScreen> {
             ),
           ),
           // Edit Icon
-          Container(
-            padding: EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              border: Border.all(color: const Color(0xFF008751), width: 1.5),
-              borderRadius: BorderRadius.circular(8),
+          InkWell(
+            onTap: () {},
+            child: SvgPicture.asset(
+              'assets/icons/tabler_edit.svg',
+              width: 24.r,
+              height: 24.r,
+              fit: BoxFit.scaleDown,
             ),
-            child: const Icon(Icons.edit_outlined,
-                color: Color(0xFF008751), size: 16),
           ),
         ],
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/helper/app_text_style.dart';
 
@@ -54,11 +55,16 @@ class ContactUsDialog extends StatelessWidget {
             onTap: () {
               Navigator.pushNamed(context, Routes.requestCallScreen);
             },
-            icon: Icons.phone_in_talk_outlined,
+            icon: SvgPicture.asset(
+              'assets/icons/call.svg',
+              height: 40.r,
+              width: 40.r,
+              fit: BoxFit.scaleDown,
+            ),
             title: 'Request a call',
             subtitle: 'Let us call you to answer your question',
             trailing:
-                Icon(Icons.arrow_forward_ios, size: 14.r, color: Colors.black),
+                Icon(Icons.arrow_forward_ios, size: 20.r, color: Colors.black),
           ),
 
           SizedBox(height: 16.h),
@@ -67,9 +73,13 @@ class ContactUsDialog extends StatelessWidget {
           _buildActionItem(
             onTap: () async {},
             title: 'Contact us via Whatsapp',
-            trailing: Icon(Icons.chat,
-                color: const Color(0xFF25D366),
-                size: 24.r), // Using standard icon colored green
+            trailing: SvgPicture.asset(
+              'assets/icons/whatsapp-filled.svg',
+              color: const Color(0xFF25D366),
+              height: 24.r,
+              width: 24.r,
+              fit: BoxFit.scaleDown,
+            ),
             isWhatsApp: true,
           ),
 
@@ -97,7 +107,7 @@ class ContactUsDialog extends StatelessWidget {
     required VoidCallback onTap,
     String? title,
     String? subtitle,
-    IconData? icon,
+    Widget? icon,
     Widget? trailing,
     bool isWhatsApp = false,
   }) {
@@ -119,7 +129,7 @@ class ContactUsDialog extends StatelessWidget {
                   color: Colors.grey.shade300,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, size: 20.r, color: Colors.black),
+                child: icon,
               ),
               SizedBox(width: 16.w),
             ],

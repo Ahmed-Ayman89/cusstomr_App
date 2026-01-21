@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class CustomTextField extends StatelessWidget {
   final String hintText;
   final IconData? prefixIcon;
+  final Widget? suffixIcon;
   final TextInputType keyboardType;
   final String? Function(String?)? validator;
   final TextEditingController? controller;
@@ -12,6 +13,7 @@ class CustomTextField extends StatelessWidget {
     super.key,
     required this.hintText,
     this.prefixIcon,
+    this.suffixIcon,
     this.keyboardType = TextInputType.text,
     this.validator,
     this.controller,
@@ -55,6 +57,7 @@ class CustomTextField extends StatelessWidget {
             minWidth: 40,
             minHeight: 24,
           ),
+          suffixIcon: suffixIcon,
           contentPadding: const EdgeInsets.symmetric(
             vertical: 16.0,
             horizontal: 16.0,

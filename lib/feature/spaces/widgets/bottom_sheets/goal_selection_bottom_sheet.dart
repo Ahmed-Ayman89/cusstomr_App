@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import '../../../../core/helper/app_text_style.dart';
-import '../../screens/create_space_screen.dart';
+import '../../screens/goal_intro_screen.dart';
 
 class GoalSelectionBottomSheet extends StatelessWidget {
   const GoalSelectionBottomSheet({super.key});
@@ -49,7 +49,7 @@ class GoalSelectionBottomSheet extends StatelessWidget {
                 context,
                 PageRouteBuilder(
                   pageBuilder: (context, animation, secondaryAnimation) =>
-                      const CreateSpaceScreen(),
+                      const GoalIntroScreen(),
                   transitionsBuilder:
                       (context, animation, secondaryAnimation, child) {
                     return FadeTransition(opacity: animation, child: child);

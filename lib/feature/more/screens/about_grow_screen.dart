@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import '../../../core/helper/app_text_style.dart';
 
 class AboutGrowScreen extends StatelessWidget {
@@ -46,14 +47,11 @@ class AboutGrowScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  Container(
-                    padding: EdgeInsets.all(12.r),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(Icons.star,
-                        color: const Color(0xFF00695C), size: 24.r),
+                  SvgPicture.asset(
+                    'assets/icons/star.svg',
+                    height: 60.r,
+                    width: 60.r,
+                    fit: BoxFit.scaleDown,
                   ),
                   SizedBox(height: 16.h),
                   Text(

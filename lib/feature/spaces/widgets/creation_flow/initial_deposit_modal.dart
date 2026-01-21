@@ -3,6 +3,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/helper/app_text_style.dart';
 import '../../../auth/widgets/custom_keypad.dart';
+import '../../widgets/space_icon.dart';
+import '../../../auth/widgets/Cusstom_btn.dart';
+import '../../../../core/router/routes.dart';
 
 class InitialDepositModal extends StatefulWidget {
   final String spaceName;
@@ -54,12 +57,72 @@ class _InitialDepositModalState extends State<InitialDepositModal> {
         _passcode += value;
       });
       if (_passcode.length == 6) {
-        // Auto confirm? Or wait? Design shows just confirm button usually implicitly
-        // For now let's just wait for user or maybe auto submit if robust
-        // But let's assume valid passcode for this flow for now
-        widget.onConfirm(double.tryParse(_amountController.text) ?? 0);
+        _showSuccessDialog();
       }
     }
+  }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+        child: Padding(
+          padding: EdgeInsets.all(24.r),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: EdgeInsets.all(16.r),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFF1B5E20), width: 2),
+                ),
+                child: Icon(
+                  Icons.check,
+                  color: const Color(0xFF1B5E20),
+                  size: 32.r,
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                "Confirm",
+                style: AppTextStyle.setPoppinsBlack(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Text(
+                "Your Points ${_amountController.text} is on its way to ${widget.spaceName} space",
+                textAlign: TextAlign.center,
+                style: AppTextStyle.setPoppinsSecondaryText(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              SizedBox(height: 24.h),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context); // Close dialog
+                  widget
+                      .onConfirm(double.tryParse(_amountController.text) ?? 0);
+                },
+                child: Text(
+                  "OK",
+                  style: AppTextStyle.setPoppinsBrandPrimary(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _onPasscodeBackspace() {
@@ -350,10 +413,10 @@ class _InitialDepositModalState extends State<InitialDepositModal> {
   }
 
   Widget _buildSpaceIcon() {
-    if (widget.spaceIcon.endsWith('.svg')) {
-      return SvgPicture.asset(widget.spaceIcon,
-          width: 24.w, color: const Color(0xFF00695C));
-    }
-    return Image.asset(widget.spaceIcon, width: 24.w);
+    return SpaceIcon(
+      iconPath: widget.spaceIcon,
+      width: 24.w,
+      height: 24.w,
+    );
   }
 }
