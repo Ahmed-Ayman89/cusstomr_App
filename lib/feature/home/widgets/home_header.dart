@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/helper/app_text_style.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../profile/widgets/profile_bottom_sheet.dart';
 
 class HomeHeader extends StatelessWidget {
   const HomeHeader({super.key});
@@ -11,9 +12,19 @@ class HomeHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        CircleAvatar(
-          radius: 25.r,
-          child: Icon(Icons.person, size: 24.r, color: Colors.black),
+        InkWell(
+          onTap: () {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (context) => const ProfileBottomSheet(),
+            );
+          },
+          child: CircleAvatar(
+            radius: 25.r,
+            child: Icon(Icons.person, size: 24.r, color: Colors.black),
+          ),
         ),
         SizedBox(width: 12.w),
         Column(

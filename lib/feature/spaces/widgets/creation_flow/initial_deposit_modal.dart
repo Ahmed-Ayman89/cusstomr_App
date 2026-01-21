@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/helper/app_text_style.dart';
 import '../../../auth/widgets/custom_keypad.dart';
 import '../../widgets/space_icon.dart';
-import '../../../auth/widgets/Cusstom_btn.dart';
-import '../../../../core/router/routes.dart';
 
 class InitialDepositModal extends StatefulWidget {
   final String spaceName;
