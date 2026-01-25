@@ -8,6 +8,7 @@ class CustomButton extends StatelessWidget {
   final VoidCallback onPressed;
   final Color? color;
   final Color? textColor;
+  final bool isLoading;
 
   const CustomButton({
     super.key,
@@ -15,6 +16,7 @@ class CustomButton extends StatelessWidget {
     required this.onPressed,
     this.color,
     this.textColor,
+    this.isLoading = false,
   });
 
   @override
@@ -33,15 +35,24 @@ class CustomButton extends StatelessWidget {
             color: AppColors.brandPrimary,
           ),
         ),
-        onPressed: onPressed,
-        child: Text(
-          title,
-          style: AppTextStyle.setPoppinsTextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: textColor ?? AppColors.white,
-          ),
-        ),
+        onPressed: isLoading ? null : onPressed,
+        child: isLoading
+            ? SizedBox(
+                height: 24.h,
+                width: 24.h,
+                child: CircularProgressIndicator(
+                  color: textColor ?? AppColors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : Text(
+                title,
+                style: AppTextStyle.setPoppinsTextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: textColor ?? AppColors.white,
+                ),
+              ),
       ),
     );
   }

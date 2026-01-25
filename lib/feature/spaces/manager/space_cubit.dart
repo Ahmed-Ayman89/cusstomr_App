@@ -12,9 +12,10 @@ class SpaceCubit extends Cubit<SpaceState> {
     try {
       emit(SpaceLoading());
       final spaces = await repository.getSpaces();
+      if (isClosed) return;
       emit(SpaceLoaded(spaces));
     } catch (e) {
-      emit(SpaceError(e.toString()));
+      if (!isClosed) emit(SpaceError(e.toString()));
     }
   }
 
@@ -22,9 +23,10 @@ class SpaceCubit extends Cubit<SpaceState> {
     try {
       emit(SpaceLoading());
       final space = await repository.getSpaceById(id);
+      if (isClosed) return;
       emit(SpaceDetailLoaded(space));
     } catch (e) {
-      emit(SpaceError(e.toString()));
+      if (!isClosed) emit(SpaceError(e.toString()));
     }
   }
 
@@ -32,10 +34,11 @@ class SpaceCubit extends Cubit<SpaceState> {
     try {
       emit(SpaceLoading());
       await repository.createSpace(space);
+      if (isClosed) return;
       emit(SpaceOperationSuccess('Space created successfully'));
       await loadSpaces();
     } catch (e) {
-      emit(SpaceError(e.toString()));
+      if (!isClosed) emit(SpaceError(e.toString()));
     }
   }
 
@@ -43,10 +46,11 @@ class SpaceCubit extends Cubit<SpaceState> {
     try {
       emit(SpaceLoading());
       await repository.updateSpace(space);
+      if (isClosed) return;
       emit(SpaceOperationSuccess('Space updated successfully'));
       await loadSpaces();
     } catch (e) {
-      emit(SpaceError(e.toString()));
+      if (!isClosed) emit(SpaceError(e.toString()));
     }
   }
 
@@ -54,10 +58,11 @@ class SpaceCubit extends Cubit<SpaceState> {
     try {
       emit(SpaceLoading());
       await repository.deleteSpace(id);
+      if (isClosed) return;
       emit(SpaceOperationSuccess('Space deleted successfully'));
       await loadSpaces();
     } catch (e) {
-      emit(SpaceError(e.toString()));
+      if (!isClosed) emit(SpaceError(e.toString()));
     }
   }
 
@@ -65,10 +70,11 @@ class SpaceCubit extends Cubit<SpaceState> {
     try {
       emit(SpaceLoading());
       await repository.setGoal(spaceId, goalAmount);
+      if (isClosed) return;
       emit(SpaceOperationSuccess('Goal set successfully'));
       await loadSpaces();
     } catch (e) {
-      emit(SpaceError(e.toString()));
+      if (!isClosed) emit(SpaceError(e.toString()));
     }
   }
 }

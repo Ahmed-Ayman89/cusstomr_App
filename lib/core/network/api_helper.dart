@@ -47,6 +47,14 @@ class APIHelper {
               return handler.reject(err);
             }
 
+            // Don't clear tokens for wrong passcode scenarios
+            if (err.requestOptions.path
+                    .contains(EndPoints.customerLoginComplete) ||
+                err.requestOptions.path
+                    .contains(EndPoints.customerRegisterComplete)) {
+              return handler.next(err);
+            }
+
             try {
               final refreshToken = LocalData.refreshToken;
               if (refreshToken == null || refreshToken.isEmpty) {

@@ -4,13 +4,12 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../core/helper/app_text_style.dart';
 import '../data/models/space_model.dart';
-import '../data/repository/space_repository.dart';
-import '../manager/space_cubit.dart';
-import '../manager/space_state.dart';
+import '../data/repositories/spaces_repository.dart';
+import '../presentation/cubit/space_detail_cubit.dart';
 import 'space_settings_screen.dart';
 import '../widgets/space_icon.dart';
-import '../widgets/transfer/transfer_points_modal.dart';
-import '../manager/transfer_cubit.dart';
+// import '../widgets/transfer/transfer_points_modal.dart';
+// import '../manager/transfer_cubit.dart';
 
 class SpaceDetailScreen extends StatelessWidget {
   final String spaceId;
@@ -19,13 +18,10 @@ class SpaceDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepositoryProvider(
-      create: (context) => SpaceRepositoryImpl(),
-      child: BlocProvider(
-        create: (context) => SpaceCubit(context.read<SpaceRepositoryImpl>())
-          ..loadSpaceDetail(spaceId),
-        child: _SpaceDetailContent(spaceId: spaceId),
-      ),
+    return BlocProvider(
+      create: (context) => SpaceDetailCubit(repository: SpacesRepository())
+        ..getSpaceDetails(spaceId),
+      child: _SpaceDetailContent(spaceId: spaceId),
     );
   }
 }
@@ -47,9 +43,9 @@ class _SpaceDetailContent extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          BlocBuilder<SpaceCubit, SpaceState>(
+          BlocBuilder<SpaceDetailCubit, SpaceDetailState>(
             builder: (context, state) {
-              if (state is SpaceDetailLoaded) {
+              if (state is SpaceDetailSuccess) {
                 return Padding(
                   padding: EdgeInsets.only(right: 16.w),
                   child: IconButton(
@@ -72,7 +68,9 @@ class _SpaceDetailContent extends StatelessWidget {
                       ).then((_) {
                         // Reload space details when returning from settings
                         if (context.mounted) {
-                          context.read<SpaceCubit>().loadSpaceDetail(spaceId);
+                          context
+                              .read<SpaceDetailCubit>()
+                              .getSpaceDetails(spaceId);
                         }
                       });
                     },
@@ -84,9 +82,9 @@ class _SpaceDetailContent extends StatelessWidget {
           ),
         ],
       ),
-      body: BlocBuilder<SpaceCubit, SpaceState>(
+      body: BlocBuilder<SpaceDetailCubit, SpaceDetailState>(
         builder: (context, state) {
-          if (state is SpaceLoading) {
+          if (state is SpaceDetailLoading) {
             return const Center(
               child: CircularProgressIndicator(
                 color: Color(0xFF008751),
@@ -94,7 +92,11 @@ class _SpaceDetailContent extends StatelessWidget {
             );
           }
 
-          if (state is SpaceDetailLoaded) {
+          if (state is SpaceDetailFailure) {
+            return Center(child: Text(state.message));
+          }
+
+          if (state is SpaceDetailSuccess) {
             final space = state.space;
             // Use specific green color from design or fallback to space color
             // Design seems to use a consistent dark green for UI elements
@@ -174,8 +176,13 @@ class _SpaceDetailContent extends StatelessWidget {
                               Expanded(
                                 child: ElevatedButton(
                                   onPressed: () {
-                                    _showTransferModal(context,
-                                        isDeposit: true, currentSpace: space);
+                                    // _showTransferModal(context,
+                                    //     isDeposit: true, currentSpace: space);
+                                    // TODO: Implement Transfer Modal with new Repos
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                            content: Text(
+                                                "Add Point - To Be Implemented with new repo")));
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: themeColor,
@@ -209,8 +216,12 @@ class _SpaceDetailContent extends StatelessWidget {
                               Expanded(
                                 child: OutlinedButton(
                                   onPressed: () {
-                                    _showTransferModal(context,
-                                        isDeposit: false, currentSpace: space);
+                                    // _showTransferModal(context,
+                                    //     isDeposit: false, currentSpace: space);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                            content: Text(
+                                                "Move Point - To Be Implemented with new repo")));
                                   },
                                   style: OutlinedButton.styleFrom(
                                     side:
@@ -318,9 +329,17 @@ class _SpaceDetailContent extends StatelessWidget {
                               ),
                             ),
                             SizedBox(height: 12.h),
-                            if (space.deadline != null)
+                            if (space.deadlineObj != null)
                               Text(
-                                'Deadline: ${_formatDate(space.deadline!)} . ${_calculateDaysLeft(space.deadline!)} days left',
+                                'Deadline: ${_formatDate(space.deadlineObj!)} . ${_calculateDaysLeft(space.deadlineObj!)} days left',
+                                style: AppTextStyle.setPoppinsSecondaryText(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              )
+                            else if (space.deadline != null)
+                              Text(
+                                'Deadline: ${space.deadline}',
                                 style: AppTextStyle.setPoppinsSecondaryText(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w400,
@@ -357,68 +376,84 @@ class _SpaceDetailContent extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        Text(
-                          'Today',
-                          style: AppTextStyle.setPoppinsSecondaryText(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
+                        // Text(
+                        //   'Today',
+                        //   style: AppTextStyle.setPoppinsSecondaryText(
+                        //     fontSize: 12,
+                        //     fontWeight: FontWeight.w400,
+                        //   ),
+                        // ),
                       ],
                     ),
                     SizedBox(height: 16.h),
 
-                    // Transaction Item (Mock)
-                    Container(
-                      padding: EdgeInsets.all(16.r),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16.r),
-                        border: Border.all(color: Colors.grey.shade100),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: EdgeInsets.all(10.r),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFE0F2F1),
-                              borderRadius: BorderRadius.circular(12.r),
-                            ),
-                            child: Icon(Icons.credit_card,
-                                color: themeColor, size: 24.r),
-                          ),
-                          SizedBox(width: 16.w),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'To Main Account',
-                                  style: AppTextStyle.setPoppinsBlack(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
+                    if (space.transactions != null &&
+                        space.transactions!.isNotEmpty)
+                      ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: space.transactions!.length,
+                          itemBuilder: (context, index) {
+                            final transaction = space.transactions![index];
+                            final isIncoming =
+                                transaction.toSpaceId == space.id;
+                            return Container(
+                              margin: EdgeInsets.only(bottom: 12.h),
+                              padding: EdgeInsets.all(16.r),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16.r),
+                                border: Border.all(color: Colors.grey.shade100),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: EdgeInsets.all(10.r),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFE0F2F1),
+                                      borderRadius: BorderRadius.circular(12.r),
+                                    ),
+                                    child: Icon(Icons.credit_card,
+                                        color: themeColor, size: 24.r),
                                   ),
-                                ),
-                                Text(
-                                  'Yesterday, 11:30 PM',
-                                  style: AppTextStyle.setPoppinsSecondaryText(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w400,
+                                  SizedBox(width: 16.w),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          isIncoming
+                                              ? 'Received from ${transaction.fromSpaceName ?? 'Main Account'}'
+                                              : 'Sent to ${transaction.toSpaceName ?? ''}',
+                                          style: AppTextStyle.setPoppinsBlack(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        // Text(
+                                        //   'Yesterday, 11:30 PM',
+                                        //   style: AppTextStyle.setPoppinsSecondaryText(
+                                        //     fontSize: 12,
+                                        //     fontWeight: FontWeight.w400,
+                                        //   ),
+                                        // ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Text(
-                            'Points 500',
-                            style: AppTextStyle.setPoppinsBlack(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                                  Text(
+                                    'Points ${transaction.amount}',
+                                    style: AppTextStyle.setPoppinsBlack(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          })
+                    else
+                      const Center(child: Text("No transactions yet")),
                     SizedBox(height: 24.h),
                   ],
                 ),
@@ -454,42 +489,5 @@ class _SpaceDetailContent extends StatelessWidget {
     final now = DateTime.now();
     final difference = deadline.difference(now);
     return difference.inDays > 0 ? difference.inDays : 0;
-  }
-
-  void _showTransferModal(BuildContext context,
-      {required bool isDeposit, required SpaceModel currentSpace}) {
-    final repo = context.read<SpaceRepositoryImpl>();
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) => BlocProvider(
-        create: (context) => TransferCubit(repo),
-        child: FutureBuilder(
-          future: repo.getSpaces(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            final spaces = snapshot.data ?? [];
-            // Remove current space from available options if moving FROM it (actually logic handled in cubit, but good to filter)
-            // But for now pass all
-
-            return TransferPointsModal(
-              availableSpaces: spaces,
-              initialSource:
-                  isDeposit ? null : currentSpace, // null = Main Account
-              initialDestination:
-                  isDeposit ? currentSpace : null, // null = User Chooses
-            );
-          },
-        ),
-      ),
-    ).then((_) {
-      // Refresh
-      if (context.mounted) {
-        context.read<SpaceCubit>().loadSpaceDetail(spaceId);
-      }
-    });
   }
 }

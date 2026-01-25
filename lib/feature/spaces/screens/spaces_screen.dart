@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/helper/app_text_style.dart';
-import '../data/repository/space_repository.dart';
-import '../manager/space_cubit.dart';
-import '../manager/space_state.dart';
+import '../data/repositories/spaces_repository.dart';
+import '../presentation/cubit/spaces_cubit.dart';
 import '../widgets/space_grid_card.dart';
 import '../widgets/bottom_sheets/goal_selection_bottom_sheet.dart';
 import 'space_detail_screen.dart';
@@ -14,10 +13,7 @@ class SpacesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => SpaceCubit(SpaceRepositoryImpl())..loadSpaces(),
-      child: const _SpacesScreenContent(),
-    );
+    return const _SpacesScreenContent();
   }
 }
 
@@ -40,26 +36,9 @@ class _SpacesScreenContent extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: BlocConsumer<SpaceCubit, SpaceState>(
-        listener: (context, state) {
-          if (state is SpaceError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.red,
-              ),
-            );
-          } else if (state is SpaceOperationSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: const Color(0xFF008751),
-              ),
-            );
-          }
-        },
+      body: BlocBuilder<SpacesCubit, SpacesState>(
         builder: (context, state) {
-          if (state is SpaceLoading) {
+          if (state is SpacesLoading) {
             return const Center(
               child: CircularProgressIndicator(
                 color: Color(0xFF008751),
@@ -67,12 +46,14 @@ class _SpacesScreenContent extends StatelessWidget {
             );
           }
 
-          if (state is SpaceLoaded) {
+          if (state is SpacesFailure) {
+            return Center(child: Text(state.message));
+          }
+
+          if (state is SpacesSuccess) {
             // Calculate total balance
-            final totalBalance = state.spaces.fold<double>(
-              0.0,
-              (sum, space) => sum + space.currentAmount,
-            );
+            final totalBalance = state.data.balance;
+            final spaces = state.data.spaces;
 
             return CustomScrollView(
               slivers: [
@@ -97,7 +78,7 @@ class _SpacesScreenContent extends StatelessWidget {
                         ),
                         SizedBox(height: 8.h),
                         Text(
-                          'Points ${totalBalance.toStringAsFixed(0)}',
+                          'Points $totalBalance',
                           style: AppTextStyle.setPoppinsBlack(
                             fontSize: 24,
                             fontWeight: FontWeight.w700,
@@ -120,7 +101,7 @@ class _SpacesScreenContent extends StatelessWidget {
                     ),
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
-                        if (index == state.spaces.length) {
+                        if (index == spaces.length) {
                           // "New Space" card
                           return _NewSpaceCard(
                             onTap: () {
@@ -135,7 +116,7 @@ class _SpacesScreenContent extends StatelessWidget {
                           );
                         }
                         // For existing spaces
-                        final space = (state).spaces[index];
+                        final space = spaces[index];
                         return SpaceGridCard(
                           space: space,
                           onTap: () {
@@ -157,8 +138,7 @@ class _SpacesScreenContent extends StatelessWidget {
                           },
                         );
                       },
-                      childCount:
-                          (state.spaces.length) + 1, // +1 for "New Space"
+                      childCount: spaces.length + 1, // +1 for "New Space"
                     ),
                   ),
                 ),

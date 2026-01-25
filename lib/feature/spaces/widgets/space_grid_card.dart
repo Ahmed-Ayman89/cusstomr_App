@@ -3,7 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/helper/app_text_style.dart';
 import '../data/models/space_model.dart';
-import 'space_icon.dart';
 
 class SpaceGridCard extends StatelessWidget {
   final SpaceModel space;
@@ -46,7 +45,7 @@ class SpaceGridCard extends StatelessWidget {
               child: SizedBox(
                 width: 60.w,
                 height: 60.h,
-                child: _buildIcon(),
+                child: Icon(Icons.savings, size: 40.r, color: Colors.green),
               ),
             ),
             const Spacer(),
@@ -63,35 +62,15 @@ class SpaceGridCard extends StatelessWidget {
             SizedBox(height: 4.h),
             // Points
             Text(
-              'Points ${space.currentAmount.toStringAsFixed(0)}',
+              'Points ${space.balance}',
               style: AppTextStyle.setPoppinsSecondaryText(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
             ),
-            if (space.hasGoal && space.goalAmount != null) ...[
-              SizedBox(height: 8.h),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4.r),
-                child: LinearProgressIndicator(
-                  value: space.progress,
-                  backgroundColor: Colors.grey.shade100,
-                  valueColor:
-                      const AlwaysStoppedAnimation<Color>(Color(0xFF008751)),
-                  minHeight: 4.h,
-                ),
-              ),
-            ]
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildIcon() {
-    return SpaceIcon(
-      iconPath: space.iconAsset,
-      fit: BoxFit.contain,
     );
   }
 }

@@ -81,7 +81,7 @@ class _SetGoalBottomSheetState extends State<SetGoalBottomSheet> {
     final finalSpace = widget.tempSpace.copyWith(
       hasGoal: hasGoal,
       goalAmount: goalAmount,
-      deadline: _selectedDate,
+      deadlineObj: _selectedDate,
     );
 
     Navigator.pop(context, finalSpace);

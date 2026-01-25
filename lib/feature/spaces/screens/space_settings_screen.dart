@@ -27,8 +27,8 @@ class _SpaceSettingsScreenState extends State<SpaceSettingsScreen> {
     _goalController = TextEditingController(
         text: 'Points ${widget.space.goalAmount?.toInt() ?? 0}');
     _deadlineController = TextEditingController(
-        text: widget.space.deadline != null
-            ? _formatDate(widget.space.deadline!)
+        text: widget.space.deadlineObj != null
+            ? _formatDate(widget.space.deadlineObj!)
             : '');
   }
 

@@ -7,8 +7,9 @@ import 'dart:math' as math;
 
 class BalanceCard extends StatefulWidget {
   final num points;
+  final String? balance;
 
-  const BalanceCard({super.key, this.points = 25890});
+  const BalanceCard({super.key, this.points = 25890, this.balance});
 
   @override
   State<BalanceCard> createState() => _BalanceCardState();
@@ -108,13 +109,12 @@ class _BalanceCardState extends State<BalanceCard> {
                   ],
                 ),
                 Text(
-                    _isVisible
-                        ? "PTS ${widget.points.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}"
-                        : "***********",
-                    style: AppTextStyle.setPoppinsWhite(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                    )),
+                  _isVisible ? '${widget.balance ?? '0.00'}' : "***********",
+                  style: AppTextStyle.setPoppinsWhite(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 SvgPicture.asset(
                   'assets/Vector.svg',
                   height: 28.h,

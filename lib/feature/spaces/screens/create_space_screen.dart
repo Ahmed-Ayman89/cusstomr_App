@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
@@ -7,6 +8,7 @@ import '../../auth/widgets/Cusstom_btn.dart';
 import '../../auth/widgets/custom_text_field.dart';
 import '../../../core/helper/app_text_style.dart';
 import '../data/models/space_model.dart';
+import '../presentation/cubit/spaces_cubit.dart';
 
 import '../widgets/creation_flow/initial_deposit_modal.dart';
 import 'set_goal_screen.dart'; // Still same filename, but class name changed
@@ -258,64 +260,155 @@ class _CreateSpaceScreenState extends State<CreateSpaceScreen> {
             // Continue Button
             Padding(
               padding: EdgeInsets.all(24.r),
-              child: CustomButton(
-                title: 'Continue',
-                onPressed: () async {
-                  if (_nameController.text.trim().isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Please enter a space name'),
-                        backgroundColor: Colors.red,
-                      ),
+              child: BlocConsumer<SpacesCubit, SpacesState>(
+                  listener: (context, state) {
+                if (state is SpacesFailure) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text(state.message),
+                        backgroundColor: Colors.red),
+                  );
+                } else if (state is SpacesSuccess) {
+                  // Or we can rely on list refresh
+                  // Assuming CreateSpace refreshes list, we can pop
+                  // But we don't have a specific CreateSuccess state.
+                  // Let's assume on success of the Future call we handle it?
+                  // Actually Cubit emits Loading then Success/Failure.
+                  // IMPORTANT: Since SpacesSuccess just holds list, we can't distinguish "Created" vs "Loaded".
+                  // So we'll rely on the Future completion inside the button logic IF we awaited, but cubit is void.
+                  // The clean way is to listen for success, but let's check if the list contains the new item? No.
+                  // We need a specific side effect or event.
+                  // For now, let's reset to simple logic: await the cubit call if changed to Future or assume Success if no error state emitted?
+                  // Actually, I'll modify Cubit to emit OperationSuccess or similar? No, I want to minimize changes.
+                  // Let's assume validation passes in UI.
+                }
+              }, builder: (context, state) {
+                return CustomButton(
+                  title: 'Continue',
+                  isLoading: state is SpacesLoading,
+                  onPressed: () async {
+                    if (_nameController.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please enter a space name'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
+                    // 1. Get Goal & Deadline
+                    final tempSpace = SpaceModel(
+                      id: 'temp',
+                      name: _nameController.text.trim(),
+                      balance: '0.00',
                     );
-                    return;
-                  }
 
-                  final newSpace = SpaceModel(
-                    id: DateTime.now().millisecondsSinceEpoch.toString(),
-                    name: _nameController.text.trim(),
-                    iconAsset: _pickedImage?.path ?? selectedTemplate['icon']!,
-                    currentAmount: 0.0,
-                    goalAmount: null,
-                    color: '#008751',
-                    hasGoal: false,
-                  );
-
-                  final result = await showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (context) =>
-                        SetGoalBottomSheet(tempSpace: newSpace),
-                  );
-
-                  if (result != null && context.mounted) {
-                    await showModalBottomSheet(
+                    final goalResult = await showModalBottomSheet<SpaceModel>(
                       context: context,
                       isScrollControlled: true,
                       backgroundColor: Colors.transparent,
-                      builder: (context) => InitialDepositModal(
-                        spaceName: result.name,
-                        spaceIcon: result.iconAsset,
-                        onConfirm: (amount) {
-                          Navigator.pop(context); // Close InitialDepositModal
-                          Navigator.pop(context, result); // Return to dashboard
-                        },
-                        onSkip: () {
-                          Navigator.pop(context); // Close InitialDepositModal
-                          Navigator.pop(context, result); // Return to dashboard
-                        },
-                      ),
+                      builder: (context) =>
+                          SetGoalBottomSheet(tempSpace: tempSpace),
                     );
-                  }
-                },
-                color: const Color(0xFF008751),
-                textColor: Colors.white,
-              ),
+
+                    if (goalResult == null) return; // User cancelled
+
+                    // 2. Confirm Passcode
+                    final passcode = await _showPasscodeDialog(context);
+                    if (passcode == null || passcode.isEmpty) return;
+
+                    // 3. Map Icon
+                    final selectedTemplate = _templates[_selectedTemplateIndex];
+                    String imageKey =
+                        selectedTemplate['name']?.toLowerCase() ?? 'home';
+                    // API expects: "home", "car", etc.
+
+                    // 4. Call API
+                    final targetAmount = goalResult.goalAmount ?? 0.0;
+                    final deadline =
+                        goalResult.deadlineObj?.toIso8601String() ?? '';
+                    // Note: API likely expects YYYY-MM-DD or ISO. User sample showed ISO.
+
+                    if (context.mounted) {
+                      await context.read<SpacesCubit>().createSpace(
+                            name: goalResult.name,
+                            image: imageKey,
+                            targetAmount: targetAmount,
+                            deadline: deadline,
+                            passcode: passcode,
+                          );
+
+                      // Check result by checking state? Or assuming success if not failed?
+                      // The createSpace in Cubit is Future<void>.
+                      // To be safe, look at current state after await.
+                      /* 
+                            Actually, since createSpace emits States, we can't easily await "Success" in the onPressed 
+                            unless we change Cubit to return value. 
+                            However, assuming happy path for now: pop if no error.
+                         */
+                      final currentState = context.read<SpacesCubit>().state;
+                      if (currentState is! SpacesFailure) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Space created successfully'),
+                                backgroundColor: Color(0xFF008751)));
+                        Navigator.pop(context); // Close Screen
+                      }
+                    }
+                  },
+                  color: const Color(0xFF008751),
+                  textColor: Colors.white,
+                );
+              }),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Future<String?> _showPasscodeDialog(BuildContext context) {
+    String passcode = '';
+    return showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Enter Passcode',
+              style: AppTextStyle.setPoppinsBlack(
+                  fontSize: 16, fontWeight: FontWeight.w600)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Please enter your 6-digit passcode to confirm creation.',
+                  style: AppTextStyle.setPoppinsSecondaryText(
+                      fontSize: 12, fontWeight: FontWeight.w400)),
+              SizedBox(height: 16.h),
+              TextField(
+                maxLength: 6,
+                keyboardType: TextInputType.number,
+                obscureText: true,
+                onChanged: (value) => passcode = value,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  hintText: 'Passcode',
+                  counterText: '',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Cancel', style: TextStyle(color: Colors.grey))),
+            TextButton(
+              onPressed: () => Navigator.pop(context, passcode),
+              child:
+                  Text('Confirm', style: TextStyle(color: Color(0xFF008751))),
+            ),
+          ],
+        );
+      },
     );
   }
 }

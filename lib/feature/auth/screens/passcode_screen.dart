@@ -4,8 +4,13 @@ import 'package:flutter_application_1/feature/auth/widgets/custom_keypad.dart';
 import 'package:flutter_application_1/feature/auth/widgets/Cusstom_btn.dart';
 import 'package:flutter_application_1/core/helper/app_text_style.dart';
 import 'package:flutter_application_1/core/router/routes.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_application_1/feature/auth/presentation/cubit/auth_cubit.dart';
+import 'package:flutter_application_1/feature/auth/data/repositories/auth_repository.dart';
+import 'package:flutter_application_1/core/helper/snackbar_helper.dart';
+import 'package:flutter_application_1/core/network/local_data.dart';
 
-enum PasscodeMode { create, confirm, login }
+enum PasscodeMode { create, confirm, login, unlock, reset }
 
 class PasscodeScreen extends StatefulWidget {
   final PasscodeMode mode;
@@ -21,14 +26,14 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
   String _currentCode = "";
   final int _codeLength = 6;
 
-  void _onKeyPressed(String value) {
+  void _onKeyPressed(String value, BuildContext context) {
     if (_currentCode.length < _codeLength) {
       setState(() {
         _currentCode += value;
       });
 
       if (_currentCode.length == _codeLength) {
-        _handleCompletion();
+        _handleCompletion(context);
       }
     }
   }
@@ -47,7 +52,7 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
     });
   }
 
-  void _handleCompletion() {
+  void _handleCompletion(BuildContext context) {
     if (widget.mode == PasscodeMode.create) {
       // Navigate to Confirm Passcode
       Future.delayed(const Duration(milliseconds: 300), () {
@@ -64,34 +69,42 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
     } else if (widget.mode == PasscodeMode.confirm) {
       // Validate Confirmation
       if (_currentCode == widget.previousPasscode) {
-        // SUCCESS
-        _showSuccessDialog();
+        // SUCCESS - Call API
+        context.read<AuthCubit>().registerComplete(_currentCode);
       } else {
         // ERROR
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Passcodes do not match. Please try again.'),
-          ),
-        );
+        SnackBarHelper.showError(
+            context, 'Passcodes do not match. Please try again.');
         setState(() {
           _currentCode = ""; // Clear for retry
         });
       }
     } else if (widget.mode == PasscodeMode.login) {
-      // LOGIN LOGIC (Mock)
-      if (_currentCode == "123456") {
-        // Mock check
-        // Navigator.pushAndRemoveUntil(
-        //   context,
-        //   MaterialPageRoute(builder: (context) => PackagesPage()), // Home
-        //   (route) => false,
-        // );
-      } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Invalid Passcode.')));
-        setState(() {
-          _currentCode = "";
+      // LOGIN LOGIC (API)
+      if (_currentCode.length == 6) {
+        context.read<AuthCubit>().loginComplete(_currentCode);
+      }
+    } else if (widget.mode == PasscodeMode.reset) {
+      // RESET PASSCODE LOGIC
+      if (_currentCode.length == 6) {
+        context.read<AuthCubit>().changePasscode(_currentCode);
+      }
+    } else if (widget.mode == PasscodeMode.unlock) {
+      // APP UNLOCK LOGIC (LOCAL)
+      if (_currentCode.length == 6) {
+        LocalData.getPasscode().then((savedPasscode) {
+          if (savedPasscode == _currentCode) {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              Routes.homeView,
+              (route) => false,
+            );
+          } else {
+            SnackBarHelper.showError(context, 'Invalid Passcode.');
+            setState(() {
+              _currentCode = "";
+            });
+          }
         });
       }
     }
@@ -162,13 +175,21 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
             child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context); // Close dialog
-              Navigator.push(
+
+              // Clear session (Logout)
+              await LocalData.clear();
+
+              if (!context.mounted) return;
+
+              // Navigate to Forgot Password Cleanly
+              Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
                   builder: (context) => const ForgotPasswordPhoneScreen(),
                 ),
+                (route) => false, // Remove all previous routes
               );
             },
             child: Text(
@@ -188,116 +209,147 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
   Widget build(BuildContext context) {
     String title = "Create a Passcode";
     if (widget.mode == PasscodeMode.confirm) title = "Confirm a Passcode";
-    if (widget.mode == PasscodeMode.login) {
-      title = "Hi, Ahmed"; // Hardcoded name for now
+    if (widget.mode == PasscodeMode.reset) title = "Reset Passcode";
+    if (widget.mode == PasscodeMode.login ||
+        widget.mode == PasscodeMode.unlock) {
+      title = "Hi, ${LocalData.userName ?? 'User'}";
     }
 
     String subtitle = "Create a passcode to keep your wallet\nsafe";
-    if (widget.mode == PasscodeMode.login) {
+    if (widget.mode == PasscodeMode.reset) subtitle = "Enter your new passcode";
+    if (widget.mode == PasscodeMode.login ||
+        widget.mode == PasscodeMode.unlock) {
       subtitle = "Enter Passcode to unlock";
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: widget.mode == PasscodeMode.login
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => Navigator.pop(context),
-              )
-            : // Show back button for Login
-            IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => Navigator.pop(context),
-              ),
-        automaticallyImplyLeading: false, // Control manually
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            Text(
-              title,
-              style: AppTextStyle.setPoppinsBlack(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              subtitle,
-              textAlign: TextAlign.center,
-              style: AppTextStyle.setPoppinsSecondaryText(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-            const SizedBox(height: 60),
-
-            // Passcode Dots
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                _codeLength,
-                (index) => Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 8),
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: index < _currentCode.length
-                        ? const Color(0xFF1B5E20) // Green
-                        : Colors.grey.shade300,
-                  ),
-                ),
-              ),
-            ),
-
-            const Spacer(),
-
-            // Keypad
-            Padding(
-              padding: const EdgeInsets.only(bottom: 20.0),
-              child: Column(
-                children: [
-                  CustomKeypad(
-                    onKeyPressed: _onKeyPressed,
-                    onDelete: _onDelete,
-                    onClear: _onClear,
-                  ),
-                  if (widget.mode == PasscodeMode.login)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 30.0, top: 0),
-                      child: Align(
-                        alignment: Alignment
-                            .centerLeft, // Actually wireframe has it below 7.
-                        child: Container(),
-                      ),
+    return BlocProvider(
+      create: (context) => AuthCubit(authRepository: AuthRepository()),
+      child: BlocConsumer<AuthCubit, AuthState>(
+        listener: (context, state) {
+          if (state is AuthSuccess) {
+            _showSuccessDialog();
+          } else if (state is AuthFailure) {
+            SnackBarHelper.showError(context, state.message);
+            setState(() {
+              _currentCode = "";
+            });
+          }
+        },
+        builder: (context, state) {
+          return Scaffold(
+            appBar: AppBar(
+              leading: widget.mode == PasscodeMode.login ||
+                      widget.mode == PasscodeMode.unlock
+                  ? IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () => Navigator.pop(context),
+                    )
+                  : // Show back button for Login
+                  IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () => Navigator.pop(context),
                     ),
-                ],
-              ),
+              automaticallyImplyLeading: false, // Control manually
+              elevation: 0,
+              backgroundColor: Colors.transparent,
             ),
-            if (widget.mode == PasscodeMode.login)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 30.0, left: 40),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton(
-                    onPressed: _onForgotPressed,
-                    child: Text(
-                      "Forgot ?",
-                      style: AppTextStyle.setPoppinsBrandPrimary(
-                        fontSize: 14,
+            body: SafeArea(
+              child: IgnorePointer(
+                ignoring: state is AuthLoading,
+                child: Column(
+                  children: [
+                    const SizedBox(height: 20),
+                    Text(
+                      title,
+                      style: AppTextStyle.setPoppinsBlack(
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 12),
+                    Text(
+                      subtitle,
+                      textAlign: TextAlign.center,
+                      style: AppTextStyle.setPoppinsSecondaryText(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    const SizedBox(height: 60),
+
+                    // Passcode Dots
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        _codeLength,
+                        (index) => Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 8),
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: index < _currentCode.length
+                                ? const Color(0xFF1B5E20) // Green
+                                : Colors.grey.shade300,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const Spacer(),
+
+                    if (state is AuthLoading)
+                      const Center(child: CircularProgressIndicator()),
+
+                    // Keypad
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 20.0),
+                      child: Column(
+                        children: [
+                          CustomKeypad(
+                            onKeyPressed: (value) =>
+                                _onKeyPressed(value, context),
+                            onDelete: _onDelete,
+                            onClear: _onClear,
+                          ),
+                          if (widget.mode == PasscodeMode.login)
+                            Padding(
+                              padding:
+                                  const EdgeInsets.only(left: 30.0, top: 0),
+                              child: Align(
+                                alignment: Alignment
+                                    .centerLeft, // Actually wireframe has it below 7.
+                                child: Container(),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    if (widget.mode == PasscodeMode.login ||
+                        widget.mode == PasscodeMode.unlock)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 30.0, left: 40),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton(
+                            onPressed: _onForgotPressed,
+                            child: Text(
+                              "Forgot ?",
+                              style: AppTextStyle.setPoppinsBrandPrimary(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 10),
+                  ],
                 ),
               ),
-            const SizedBox(height: 10),
-          ],
-        ),
+            ),
+          );
+        },
       ),
     );
   }

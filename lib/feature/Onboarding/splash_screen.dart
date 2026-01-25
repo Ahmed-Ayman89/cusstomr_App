@@ -5,6 +5,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/router/routes.dart';
+import '../../core/network/local_data.dart';
+import '../auth/screens/passcode_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -45,10 +47,19 @@ class _SplashScreenState extends State<SplashScreen>
 
     if (!mounted) return;
 
-    Navigator.pushReplacementNamed(
-      context,
-      Routes.onBoardView, // or Routes.homeView
-    );
+    if (LocalData.accessToken != null && LocalData.accessToken!.isNotEmpty) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const PasscodeScreen(mode: PasscodeMode.login),
+        ),
+      );
+    } else {
+      Navigator.pushReplacementNamed(
+        context,
+        Routes.onBoardView,
+      );
+    }
   }
 
   @override

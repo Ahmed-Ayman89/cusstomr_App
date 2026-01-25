@@ -16,20 +16,12 @@ class SpaceRepositoryImpl implements SpaceRepository {
     SpaceModel(
       id: '1',
       name: 'Goal',
-      iconAsset: 'assets/onboarding/rafiki.svg',
-      currentAmount: 1500.0,
-      goalAmount: null,
-      color: '#008751',
-      hasGoal: false,
+      balance: '1500.0',
     ),
     SpaceModel(
       id: '2',
       name: 'Plan and Save',
-      iconAsset: 'assets/onboarding/pana.svg',
-      currentAmount: 2500.0,
-      goalAmount: 5000.0,
-      color: '#008751',
-      hasGoal: true,
+      balance: '2500.0',
     ),
   ];
 
@@ -70,13 +62,7 @@ class SpaceRepositoryImpl implements SpaceRepository {
   @override
   Future<void> setGoal(String spaceId, double goalAmount) async {
     await Future.delayed(const Duration(milliseconds: 500));
-    final index = _mockSpaces.indexWhere((s) => s.id == spaceId);
-    if (index != -1) {
-      _mockSpaces[index] = _mockSpaces[index].copyWith(
-        goalAmount: goalAmount,
-        hasGoal: true,
-      );
-    }
+    // No-op for now as goal is computed property or not supported by API yet
   }
 
   @override
@@ -90,8 +76,9 @@ class SpaceRepositoryImpl implements SpaceRepository {
       if (fromIndex != -1) {
         final current = _mockSpaces[fromIndex].currentAmount;
         if (current >= amount) {
+          final newBalance = (current - amount).toString();
           _mockSpaces[fromIndex] = _mockSpaces[fromIndex].copyWith(
-            currentAmount: current - amount,
+            balance: newBalance,
           );
         } else {
           throw Exception('Insufficient funds in source space');
@@ -104,8 +91,9 @@ class SpaceRepositoryImpl implements SpaceRepository {
       final toIndex = _mockSpaces.indexWhere((s) => s.id == toId);
       if (toIndex != -1) {
         final current = _mockSpaces[toIndex].currentAmount;
+        final newBalance = (current + amount).toString();
         _mockSpaces[toIndex] = _mockSpaces[toIndex].copyWith(
-          currentAmount: current + amount,
+          balance: newBalance,
         );
       }
     }

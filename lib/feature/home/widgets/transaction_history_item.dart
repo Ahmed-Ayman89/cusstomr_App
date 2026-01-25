@@ -34,7 +34,6 @@ class TransactionHistoryItem extends StatelessWidget {
       color: Colors.white,
       child: Container(
         width: 343.w,
-        height: 79.h,
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
         child: Row(
           children: [
